@@ -100,4 +100,9 @@ It then opens full-screen from its own icon. People stay signed in until they ta
 - **Free Supabase projects pause after about a week with no activity.** Daily use keeps it awake. If it ever pauses, click **Restore** in the Supabase dashboard; no data is lost.
 - **Backups:** the free plan has no automatic backups you can download. Every month or so, export each table as a CSV from **Table Editor → Export**, or upgrade to Pro for daily backups.
 - **Invoice wording:** invoices default to **Bill of Supply** because fresh eggs (HSN 0407) are GST-exempt. Confirm this with the business's CA. The title can be changed under **Invoices → Business details printed on invoices**.
-- **Sharing PDFs:** on phones, **Share PDF** opens the share sheet, so the PDF can go straight to WhatsApp. On computers it downloads instead.
+- **Sending invoices:** each invoice has these buttons:
+  - **Send PDF on WhatsApp:** in the Android app, opens the seller's chat with the PDF attached. It uses WhatsApp Business if installed; you can change this per phone in business details.
+  - **Send SMS:** opens the SMS app with a short bill summary. SMS can't carry PDFs.
+  - **Save PDF:** saves to `Downloads/Star Eggs` and opens it.
+  - **Share:** opens Android's share menu.
+- **Saving a seller's number:** fill in the seller's WhatsApp number on the sale form once. It's remembered for their next invoices.

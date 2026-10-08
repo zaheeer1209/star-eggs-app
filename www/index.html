@@ -192,8 +192,10 @@
         <div class="invbar">
           <h3 id="invHead">Preview</h3>
           <div class="actions">
-            <button class="btn pri" type="button" id="pdfBtn" hidden>Download PDF</button>
-            <a class="btn sec" id="waBtn" target="_blank" rel="noopener" hidden>Send on WhatsApp</a>
+            <button class="btn wa" type="button" id="waPdfBtn" hidden>WhatsApp PDF</button>
+            <button class="btn sec" type="button" id="smsBtn" hidden>SMS</button>
+            <button class="btn sec" type="button" id="pdfBtn" hidden>Save PDF</button>
+            <button class="btn sec" type="button" id="shareBtn" hidden>Share</button>
             <button class="btn sec" type="button" id="invNew" hidden>New invoice</button>
             <button class="btn dng" type="button" id="invDel" hidden>Delete</button>
           </div>
@@ -218,6 +220,7 @@
           <div class="f"><label for="z_upi">UPI ID for payments</label><input id="z_upi" placeholder="name@bank"></div>
           <div class="f"><label for="z_prefix">Invoice number prefix</label><input id="z_prefix"></div>
           <div class="f"><label for="z_next">Next invoice number</label><input type="number" id="z_next" min="1" step="1"></div>
+          <div class="f" id="z_waF" hidden><label for="z_wa">Send WhatsApp from (this phone)</label><select id="z_wa"><option value="auto">WhatsApp Business if installed</option><option value="business">WhatsApp Business</option><option value="whatsapp">WhatsApp</option></select></div>
         </div>
         <div class="actions" style="margin-top:12px"><button class="btn pri" type="submit">Save details</button></div>
       </form>
@@ -291,8 +294,11 @@
     </div>
     <div id="sheetPaper"></div>
     <div class="sheetactions">
-      <button class="btn pri" type="button" id="sheetPdf">Share PDF</button>
-      <a class="btn sec" id="sheetWa" target="_blank" rel="noopener">Send on WhatsApp</a>
+      <button class="btn wa big" type="button" id="sheetWaPdf">Send PDF on WhatsApp</button>
+      <button class="btn sec" type="button" id="sheetSms">Send SMS</button>
+      <button class="btn sec" type="button" id="sheetPdf">Save PDF</button>
+      <button class="btn sec" type="button" id="sheetShare">Share</button>
+      <p class="sheethint" id="sheetHint" hidden></p>
     </div>
   </div>
 </div>

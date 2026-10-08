@@ -166,6 +166,15 @@ details.card[open] summary{margin-bottom:12px}
 .sheetbox{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
 .sheethead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .sheethead h3{font-size:1.2rem;margin-top:6px}
-.sheetactions{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:sticky;bottom:0;background:var(--bg);padding-top:6px}
-.sheetactions .btn{text-align:center;padding:12px}
+.sheetactions{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:stretch;gap:10px;position:sticky;bottom:0;background:var(--bg);padding-top:6px}
+.sheetactions .btn{text-align:center;padding:12px 6px}
 @media (min-width:721px){.sheet{align-items:center}.sheetbox{border-radius:16px}}
+
+/* send buttons */
+:root{--wa:#1F8F4E;--wa-ink:#FFFFFF}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wa:#2BAA5F;--wa-ink:#06140B}}
+:root[data-theme="dark"]{--wa:#2BAA5F;--wa-ink:#06140B}
+.btn.wa{background:var(--wa);color:var(--wa-ink)}
+.sheetactions .big{grid-column:1/-1;font-size:1rem}
+.sheethint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--muted);text-align:center}
+.busy .btn{pointer-events:none;opacity:.6}

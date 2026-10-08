@@ -255,14 +255,19 @@ let sheetInv=null;
 function openSheet(id){
   sheetInv=id;const inv=S.invoices.find(x=>x.id===id);if(!inv)return;
   $('#sheetTitle').textContent='Invoice '+inv.no+' ready';
-  $('#sheetPaper').innerHTML=paperHTML(inv);$('#sheetWa').href=waLink(inv);
+  $('#sheetPaper').innerHTML=paperHTML(inv);
+  const hint=$('#sheetHint');hint.hidden=!!phoneDigits(inv.phone);hint.textContent="No number saved for this seller, so you'll pick the chat or contact yourself.";
   $('#invSheet').hidden=false;document.body.style.overflow='hidden';
 }
 function closeSheet(){$('#invSheet').hidden=true;document.body.style.overflow='';sheetInv=null}
 $('#sheetClose').onclick=closeSheet;
 $('#invSheet').addEventListener('click',e=>{if(e.target.id==='invSheet')closeSheet()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#invSheet').hidden)closeSheet()});
-$('#sheetPdf').onclick=()=>{const inv=S.invoices.find(x=>x.id===sheetInv);if(inv)sharePdf(inv)};
+const sheetDo=fn=>()=>{const inv=S.invoices.find(x=>x.id===sheetInv);if(inv)fn(inv)};
+$('#sheetPdf').onclick=sheetDo(savePdf);
+$('#sheetShare').onclick=sheetDo(sharePdf);
+$('#sheetWaPdf').onclick=sheetDo(sendWhatsAppPdf);
+$('#sheetSms').onclick=sheetDo(sendSms);
 
 function readForm(k){
   if(k==='buy'){
@@ -408,8 +413,7 @@ function renderInvoices(){
   if(!inv){curInv=null;inv=draftInv()}
   $('#invPreview').innerHTML=paperHTML(inv);
   $('#invHead').textContent=inv.draft?'Preview':inv.no;
-  $('#pdfBtn').hidden=inv.draft||!dl;$('#waBtn').hidden=inv.draft;$('#invNew').hidden=inv.draft;$('#invDel').hidden=inv.draft||!canWrite;
-  if(!inv.draft)$('#waBtn').href=waLink(inv);
+  $('#pdfBtn').hidden=inv.draft||!dl;$('#shareBtn').hidden=inv.draft||!(isNative()||canShareFiles);$('#waPdfBtn').hidden=inv.draft;$('#smsBtn').hidden=inv.draft;$('#invNew').hidden=inv.draft;$('#invDel').hidden=inv.draft||!canWrite;
   const I=byDate(S.invoices);
   $('#tBill').innerHTML=I.length?I.map(x=>{const p=livePaid(x);return `<tr><td><b>${esc(x.no)}</b>${exTag(x)}</td><td>${fmtDate(x.date)}</td><td>${esc(x.seller)}</td><td class="num">${inr(x.total)}</td><td>${statusChip(x.total,p)}</td><td><button class="link" type="button" data-viewinv="${esc(x.no)}">View</button></td></tr>`}).join('')
     :'<tr><td colspan="6" class="empty" style="padding:16px 12px">No invoices yet. Pick a seller, tick their orders and create one.</td></tr>';
@@ -445,34 +449,98 @@ document.addEventListener('click',e=>{
   const bb=e.target.closest('[data-bill]');
   if(bb){const r=S.sales.find(x=>x.id===bb.dataset.bill);if(!r)return;curInv=null;$('#v_seller').value=r.seller;pickSeller=r.seller;picked=new Set([r.id]);prefillBillTo(r.seller);$('#v_date').value=today();showTab('invoices');renderInvoices()}
 });
-$('#pdfBtn').onclick=()=>{const inv=S.invoices.find(x=>x.id===curInv);if(inv)sharePdf(inv)};
-const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
-let nativePlugins=null;
-function plugins(){if(!nativePlugins)nativePlugins={fs:window.Capacitor.registerPlugin('Filesystem'),share:window.Capacitor.registerPlugin('Share')};return nativePlugins}
-function toBase64(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
-async function sharePdf(inv){
-  if(!window.jspdf){toast('PDF maker did not load. Reopen the app and try again.');return}
-  const buf=makePdf(inv),name=inv.no+'.pdf',title=(BIZ.name||'Star Eggs')+' '+inv.no;
-  if(NATIVE){
+const curDo=fn=>()=>{const inv=S.invoices.find(x=>x.id===curInv);if(inv)fn(inv)};
+$('#pdfBtn').onclick=curDo(savePdf);
+$('#shareBtn').onclick=curDo(sharePdf);
+$('#waPdfBtn').onclick=curDo(sendWhatsAppPdf);
+$('#smsBtn').onclick=curDo(sendSms);
+const isNative=()=>!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+const NATIVE=isNative();
+let msgPlugin=null;
+const msg=()=>msgPlugin||(msgPlugin=window.Capacitor.registerPlugin('Messaging'));
+// Never leave the person waiting on a button: give up after 15 s with a message.
+function withTimeout(p,ms=15000){return Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej({code:'TIMEOUT',message:'timed out'}),ms))])}
+function pdfReady(){if(window.jspdf)return true;toast('PDF maker did not load. Close and reopen the app.');return false}
+function failToast(what,err){console.error(what,err);toast(err&&err.code==='TIMEOUT'?what+' is taking too long. Try again.':'Could not '+what.toLowerCase()+(err&&err.message?': '+err.message:''))}
+let busy=false;
+async function once(fn){if(busy)return;busy=true;document.body.classList.add('busy');try{await fn()}finally{busy=false;document.body.classList.remove('busy')}}
+async function nativePdfPath(inv){const r=await withTimeout(msg().writePdf({name:inv.no+'.pdf',data:toBase64(makePdf(inv))}));return r.path}
+function webDownload(inv){
+  const file=new File([makePdf(inv)],inv.no+'.pdf',{type:'application/pdf'});
+  const url=URL.createObjectURL(file),a=document.createElement('a');
+  a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),5000);return file;
+}
+function phoneDigits(p){let d=String(p||'').replace(/\D/g,'');if(d.length===11&&d[0]==='0')d=d.slice(1);if(d.length===10)d='91'+d;return d}
+function waCaption(inv){const bal=inv.total-livePaid(inv);return `${BIZ.name||'Star Eggs'} ${BIZ.title||'Invoice'} ${inv.no} · Total ${inr(inv.total)} · Balance due ${inr(bal)}${BIZ.upi?' · UPI: '+BIZ.upi:''}`}
+function smsText(inv){
+  const rs=n=>'Rs.'+Math.round(n).toLocaleString('en-IN'),paid=livePaid(inv),bal=inv.total-paid;
+  const items=inv.lines.map(l=>`${l.qty} x ${l.pack==='loose'?'eggs':l.pack+'-egg pack'} ${rs(l.amount)}`).join(', ');
+  return `${BIZ.name||'Star Eggs'} bill ${inv.no} dt ${fmtDate(inv.date)}: ${items}. Total ${rs(inv.total)}, received ${rs(paid)}, balance ${rs(bal)}.${BIZ.upi?' Pay UPI: '+BIZ.upi+'.':''} Thank you.`;
+}
+function waPref(){try{return localStorage.getItem('se_wa')||'auto'}catch(e){return 'auto'}}
+function sendWhatsAppPdf(inv){return once(()=>whatsAppPdf(inv))}
+async function whatsAppPdf(inv){
+  if(!pdfReady())return;
+  const phone=phoneDigits(inv.phone);
+  if(isNative()){
     try{
-      const {fs,share}=plugins();
-      const res=await fs.writeFile({path:name,data:toBase64(buf),directory:'CACHE'});
-      await share.share({title,dialogTitle:'Send '+inv.no,files:[res.uri]});
-    }catch(err){if(!/cancel/i.test(String(err&&err.message||err)))toast('Could not open sharing. Try again.')}
+      const path=await nativePdfPath(inv);
+      await withTimeout(msg().whatsappFile({path,phone,text:waCaption(inv),prefer:waPref()}));
+      if(!phone)toast('Pick the seller’s chat in WhatsApp');
+    }catch(err){
+      if(err&&err.code==='NOT_INSTALLED')toast('WhatsApp isn’t installed on this phone. Use Share instead.');
+      else failToast('Open WhatsApp',err);
+    }
     return;
   }
-  const file=new File([buf],name,{type:'application/pdf'});
+  // Website: the phone's share sheet can carry the PDF; on a computer, download it and open the chat.
+  const file=new File([makePdf(inv)],inv.no+'.pdf',{type:'application/pdf'});
+  if(canShareFiles){
+    try{await navigator.share({files:[file],text:waCaption(inv)});return}
+    catch(err){if(err&&err.name==='AbortError')return}
+  }
+  webDownload(inv);
+  window.open(waLink(inv),'_blank','noopener');
+  toast('PDF downloaded. Attach it in the WhatsApp chat that opened.');
+}
+async function sendSms(inv){
+  const phone=phoneDigits(inv.phone),text=smsText(inv);
+  if(isNative()){
+    try{await withTimeout(msg().sms({phone:phone?'+'+phone:'',text}))}
+    catch(err){toast(err&&err.code==='NO_SMS_APP'?'No SMS app on this phone':'Could not open SMS')}
+    return;
+  }
+  window.location.href='sms:'+(phone?'+'+phone:'')+'?&body='+encodeURIComponent(text);
+}
+function toBase64(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
+function savePdf(inv){return once(async()=>{
+  if(!pdfReady())return;
+  if(isNative()){
+    try{const r=await withTimeout(msg().savePdf({name:inv.no+'.pdf',data:toBase64(makePdf(inv))}));toast('Saved to '+r.where)}
+    catch(err){failToast('Save the PDF',err)}
+    return;
+  }
+  webDownload(inv);toast('PDF saved');
+})}
+function sharePdf(inv){return once(async()=>{
+  if(!pdfReady())return;
+  const title=(BIZ.name||'Star Eggs')+' '+inv.no;
+  if(isNative()){
+    try{const path=await nativePdfPath(inv);await withTimeout(msg().share({path,title:'Send '+inv.no,text:waCaption(inv)}))}
+    catch(err){failToast('Open sharing',err)}
+    return;
+  }
+  const file=new File([makePdf(inv)],inv.no+'.pdf',{type:'application/pdf'});
   if(canShareFiles){
     try{await navigator.share({files:[file],title});return}
     catch(err){if(err&&err.name==='AbortError')return}
   }
-  const url=URL.createObjectURL(file),a=document.createElement('a');
-  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(url),5000);toast('PDF saved');
-}
+  webDownload(inv);toast('PDF saved');
+})}
 // In the Android app, open WhatsApp links through the system so WhatsApp itself opens.
 document.addEventListener('click',e=>{
-  if(!NATIVE)return;const a=e.target.closest('a[href^="https://wa.me/"]');if(!a)return;
+  if(!isNative())return;const a=e.target.closest('a[href^="https://wa.me/"]');if(!a)return;
   e.preventDefault();window.location.href=a.href;
 });
 function makePdf(inv){
@@ -594,8 +662,9 @@ async function loadAll(){
 }
 
 /* ---------- sign in & start ---------- */
-const canShareFiles=(()=>{try{return !!(navigator.canShare&&navigator.canShare({files:[new File(['x'],'x.pdf',{type:'application/pdf'})]}))}catch(e){return false}})();
-$('#pdfBtn').textContent=$('#sheetPdf').textContent=(NATIVE||canShareFiles)?'Share PDF':'Download PDF';
+var canShareFiles=(()=>{try{return !!(navigator.canShare&&navigator.canShare({files:[new File(['x'],'x.pdf',{type:'application/pdf'})]}))}catch(e){return false}})();
+if(!NATIVE&&!canShareFiles)$('#sheetShare').hidden=true;
+if(NATIVE){$('#z_waF').hidden=false;$('#z_wa').value=waPref();$('#z_wa').addEventListener('change',e=>{try{localStorage.setItem('se_wa',e.target.value)}catch(_){}toast('Saved for this phone')})}
 
 function showLogin(msg){
   $('#app').hidden=true;$('#login').hidden=false;

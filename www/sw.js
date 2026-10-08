@@ -1,6 +1,6 @@
 // Star Eggs service worker: keeps the app shell available so it opens like an installed app.
 // Bump VERSION whenever you change index.html, app.js or styles.css so phones pick up the update.
-const VERSION = 'star-eggs-v2';
+const VERSION = 'star-eggs-v3';
 const SHELL = [
   './', './index.html', './styles.css', './app.js', './config.js', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
