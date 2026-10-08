@@ -5,6 +5,10 @@ def keystoreProps = new Properties()
 def keystoreFile = rootProject.file('keystore.properties')
 if (keystoreFile.exists()) { keystoreProps.load(new FileInputStream(keystoreFile)) }
 
+// GitHub Actions passes the build number in; local builds fall back to 1.
+def appVersionCode = (System.getenv('VERSION_CODE') ?: '1').toInteger()
+def appVersionName = System.getenv('VERSION_NAME') ?: '1.1.0'
+
 android {
     namespace "in.stareggs.ledger"
     compileSdk rootProject.ext.compileSdkVersion
@@ -12,8 +16,8 @@ android {
         applicationId "in.stareggs.ledger"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode (System.getenv('VERSION_CODE') ?: '1') as int
-        versionName System.getenv('VERSION_NAME') ?: '1.1.0'
+        versionCode appVersionCode
+        versionName appVersionName
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
