@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Star Eggs</title>
+<meta name="description" content="Star Eggs business ledger: buying, selling, stock, invoices, partners and expenses.">
+<meta name="theme-color" content="#F3F1EB" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#16110D" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Star Eggs">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="login" class="login" hidden>
+  <form class="loginbox" id="fLogin" novalidate>
+    <svg width="56" height="64" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="25" rx="17" ry="20" fill="var(--surface)" stroke="var(--soil)" stroke-width="2"/><path d="M20 15l3 6.2 6.8.9-5 4.7 1.3 6.7L20 30.3l-6.1 3.2 1.3-6.7-5-4.7 6.8-.9z" fill="var(--yolk)"/></svg>
+    <h1>Star Eggs</h1>
+    <p>Sign in to open the business books.</p>
+    <div class="f"><label for="l_email">Email</label><input type="email" id="l_email" autocomplete="username" required></div>
+    <div class="f"><label for="l_pass">Password</label><input type="password" id="l_pass" autocomplete="current-password" required></div>
+    <p class="err" id="l_err" hidden></p>
+    <button class="btn pri" type="submit" id="l_btn">Sign in</button>
+  </form>
+</div>
+<div id="app" hidden>
+<div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="40" height="46" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="25" rx="17" ry="20" fill="var(--surface)" stroke="var(--soil)" stroke-width="2"/><path d="M20 15l3 6.2 6.8.9-5 4.7 1.3 6.7L20 30.3l-6.1 3.2 1.3-6.7-5-4.7 6.8-.9z" fill="var(--yolk)"/></svg>
+      <div><h1>Star Eggs</h1><small>Business ledger</small></div>
+    </div>
+    <div class="topright">
+      <div class="period" role="group" aria-label="Period">
+        <button type="button" data-p="all" aria-pressed="true">All time</button>
+        <button type="button" data-p="month" aria-pressed="false">This month</button>
+        <button type="button" data-p="30" aria-pressed="false"><span class="lg">Last </span>30 days</button>
+      </div>
+      <button class="btn sec small" type="button" id="installBtn" hidden>Install app</button>
+      <button class="btn sec small" type="button" id="signOut" hidden>Sign out</button>
+    </div>
+  </header>
+
+  <div id="status" class="notice">Loading your books…</div>
+  <div id="iosTip" class="notice" hidden>
+    <span>To install on iPhone: tap the <b>Share</b> button in Safari, then <b>Add to Home Screen</b>.</span>
+    <button class="btn sec small" type="button" id="iosTipClose">Got it</button>
+  </div>
+
+  <nav class="tabs" role="tablist">
+    <button role="tab" data-t="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-t="buying" aria-selected="false">Buying</button>
+    <button role="tab" data-t="selling" aria-selected="false">Selling</button>
+    <button role="tab" data-t="invoices" aria-selected="false">Invoices</button>
+    <button role="tab" data-t="partners" aria-selected="false">Partners</button>
+    <button role="tab" data-t="expenses" aria-selected="false">Expenses</button>
+  </nav>
+
+  <!-- OVERVIEW -->
+  <section class="panel" id="p-overview">
+    <div id="welcome" class="welcome" hidden>
+      <h2>Your books are empty</h2>
+      <p>Add the first batch of eggs you bought under <b>Buying</b>, record seller orders under <b>Selling</b>, and each person's money under <b>Partners</b>. Stock, profit and dues fill in on their own.</p>
+      <div class="actions"><button class="btn pri" type="button" data-go="buying">Add a purchase</button><button class="btn sec" type="button" data-go="partners">Add an investment</button></div>
+    </div>
+    <div id="ovBody">
+      <div class="stockline">
+        <div class="big" id="stockBig">0</div>
+        <div class="unit" id="stockUnit">eggs in stock</div>
+        <span id="stockChip" class="chip plain">—</span>
+      </div>
+      <div class="kpis">
+        <div class="kpi hl"><div class="lbl">Sales</div><div class="val" id="kRev">₹0</div><div class="sub" id="kRevSub"></div></div>
+        <div class="kpi"><div class="lbl">Net profit</div><div class="val" id="kProfit">₹0</div><div class="sub" id="kProfitSub"></div></div>
+        <div class="kpi"><div class="lbl">Cash in hand</div><div class="val" id="kCash">₹0</div><div class="sub">all time</div></div>
+        <div class="kpi"><div class="lbl">Total invested</div><div class="val" id="kInv">₹0</div><div class="sub" id="kInvSub"></div></div>
+        <div class="kpi"><div class="lbl">Eggs bought</div><div class="val" id="kBought">0</div><div class="sub" id="kBoughtSub"></div></div>
+        <div class="kpi"><div class="lbl">Eggs sold</div><div class="val" id="kSold">0</div><div class="sub" id="kSoldSub"></div></div>
+        <div class="kpi"><div class="lbl">To collect</div><div class="val" id="kDue">₹0</div><div class="sub">from sellers</div></div>
+        <div class="kpi"><div class="lbl">To pay</div><div class="val" id="kPay">₹0</div><div class="sub">to suppliers</div></div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h3>Eggs in and out <span>last 6 months</span></h3>
+          <div class="legend"><span><i style="background:var(--soil)"></i>Bought</span><span><i style="background:var(--yolk)"></i>Sold</span></div>
+          <div id="chart"></div>
+        </div>
+        <div class="card">
+          <h3>Seller dues <span id="dueCount"></span></h3>
+          <div class="list" id="dueList"></div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="card">
+          <h3>Partners <span>share of capital · share of profit</span></h3>
+          <div class="list" id="ovPartners"></div>
+        </div>
+        <div class="card">
+          <h3>Money per egg <span id="pegPeriod"></span></h3>
+          <div class="list" id="perEgg"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUYING -->
+  <section class="panel" id="p-buying" hidden>
+    <div class="work">
+      <form class="entry" id="fBuy" novalidate>
+        <h3 id="fBuyTitle">Record a purchase</h3>
+        <div class="pair">
+          <div class="f"><label for="b_date">Date</label><input type="date" id="b_date" required></div>
+          <div class="f"><label for="b_sup">Farm / supplier</label><input id="b_sup" list="dl_sup" placeholder="e.g. Shamshabad farm" required></div>
+        </div>
+        <div class="pair">
+          <div class="f"><label for="b_qty">Quantity</label><input type="number" id="b_qty" min="0" step="1" inputmode="numeric" required></div>
+          <div class="f"><label for="b_unit">Counted in</label><select id="b_unit"><option value="tray">Trays (30 eggs)</option><option value="egg">Single eggs</option></select></div>
+        </div>
+        <div class="pair">
+          <div class="f"><label for="b_rate" id="b_rateL">₹ per tray</label><input type="number" id="b_rate" min="0" step="0.01" inputmode="decimal" required></div>
+          <div class="f"><label for="b_paid">Paid now (₹)</label><input type="number" id="b_paid" min="0" step="1" inputmode="numeric" placeholder="Blank = paid in full"></div>
+        </div>
+        <div class="f"><label for="b_note">Note</label><input id="b_note" placeholder="Optional"></div>
+        <div class="preview" id="b_prev">Enter quantity and rate</div>
+        <div class="actions"><button class="btn pri" type="submit">Save purchase</button><button class="btn sec" type="button" data-cancel="buy" hidden>Cancel</button><button class="btn dng" type="button" data-del="buy" hidden>Delete</button></div>
+      </form>
+      <div class="tablewrap">
+        <div class="tablehead"><h3>Purchases</h3><span id="buySum"></span></div>
+        <table><thead><tr><th>Date</th><th>Supplier</th><th class="num">Eggs</th><th class="num">₹/egg</th><th class="num">Cost</th><th class="num">Paid</th><th>Status</th><th></th></tr></thead><tbody id="tBuy"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- SELLING -->
+  <section class="panel" id="p-selling" hidden>
+    <div class="work">
+      <form class="entry" id="fSell" novalidate>
+        <h3 id="fSellTitle">Record a sale</h3>
+        <div class="pair">
+          <div class="f"><label for="s_date">Date</label><input type="date" id="s_date" required></div>
+          <div class="f"><label for="s_seller">Seller / shop</label><input id="s_seller" list="dl_sel" placeholder="e.g. Ratnadeep, Tolichowki" required></div>
+        </div>
+        <div class="pair">
+          <div class="f"><label for="s_pack">Pack</label><select id="s_pack"><option value="12">12-egg pack</option><option value="30">30-egg pack</option><option value="loose">Loose eggs</option></select></div>
+          <div class="f"><label for="s_qty" id="s_qtyL">Packs</label><input type="number" id="s_qty" min="0" step="1" inputmode="numeric" required></div>
+        </div>
+        <div class="pair">
+          <div class="f"><label for="s_rate" id="s_rateL">₹ per pack</label><input type="number" id="s_rate" min="0" step="0.01" inputmode="decimal" required></div>
+          <div class="f"><label for="s_paid">Received (₹)</label><input type="number" id="s_paid" min="0" step="1" inputmode="numeric" placeholder="Blank = paid in full"></div>
+        </div>
+        <div class="f"><label for="s_note">Note</label><input id="s_note" placeholder="Optional"></div>
+        <div class="preview" id="s_prev">MRP: ₹240 per 12-pack · ₹600 per 30-pack</div>
+        <div class="actions"><button class="btn pri" type="submit">Save sale</button><button class="btn sec" type="button" data-cancel="sell" hidden>Cancel</button><button class="btn dng" type="button" data-del="sell" hidden>Delete</button></div>
+      </form>
+      <div class="tablewrap">
+        <div class="tablehead"><h3>Sales to sellers</h3><span id="sellSum"></span></div>
+        <table><thead><tr><th>Date</th><th>Seller</th><th>Pack</th><th class="num">Qty</th><th class="num">Eggs</th><th class="num">Amount</th><th class="num">Received</th><th>Status</th><th>Bill</th><th></th></tr></thead><tbody id="tSell"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <!-- INVOICES -->
+  <section class="panel" id="p-invoices" hidden>
+    <div class="work">
+      <form class="entry" id="fBill" novalidate>
+        <h3>New invoice</h3>
+        <div class="pair">
+          <div class="f"><label for="v_seller">Seller / shop</label><input id="v_seller" list="dl_sel" placeholder="Pick a seller"></div>
+          <div class="f"><label for="v_date">Invoice date</label><input type="date" id="v_date"></div>
+        </div>
+        <div class="f"><label>Orders to bill</label><div class="picks" id="v_lines"></div></div>
+        <div class="f"><label for="v_addr">Seller address</label><input id="v_addr" placeholder="Optional"></div>
+        <div class="pair">
+          <div class="f"><label for="v_phone">Seller WhatsApp no.</label><input id="v_phone" inputmode="tel" placeholder="10-digit mobile"></div>
+          <div class="f"><label for="v_gstin">Seller GSTIN</label><input id="v_gstin" placeholder="Optional"></div>
+        </div>
+        <div class="f"><label for="v_note">Note on invoice</label><input id="v_note" placeholder="e.g. Pay within 7 days"></div>
+        <div class="actions"><button class="btn pri" type="submit">Create invoice</button></div>
+      </form>
+      <div class="invcol">
+        <div class="invbar">
+          <h3 id="invHead">Preview</h3>
+          <div class="actions">
+            <button class="btn pri" type="button" id="pdfBtn" hidden>Download PDF</button>
+            <a class="btn sec" id="waBtn" target="_blank" rel="noopener" hidden>Send on WhatsApp</a>
+            <button class="btn sec" type="button" id="invNew" hidden>New invoice</button>
+            <button class="btn dng" type="button" id="invDel" hidden>Delete</button>
+          </div>
+        </div>
+        <div id="invPreview"></div>
+        <div class="tablewrap">
+          <div class="tablehead"><h3>Invoices</h3><span id="billSum"></span></div>
+          <table><thead><tr><th>No.</th><th>Date</th><th>Seller</th><th class="num">Amount</th><th>Status</th><th></th></tr></thead><tbody id="tBill"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <details class="card" id="bizCard" style="margin-top:16px">
+      <summary>Business details printed on invoices</summary>
+      <form id="fBiz" novalidate>
+        <div class="bizgrid">
+          <div class="f"><label for="z_name">Business name</label><input id="z_name"></div>
+          <div class="f"><label for="z_phone">Phone</label><input id="z_phone" inputmode="tel"></div>
+          <div class="f"><label for="z_title">Document title</label><select id="z_title"><option>Bill of Supply</option><option>Tax Invoice</option><option>Invoice</option></select></div>
+          <div class="f" style="grid-column:1/-1"><label for="z_addr">Address</label><input id="z_addr"></div>
+          <div class="f"><label for="z_gstin">GSTIN</label><input id="z_gstin"></div>
+          <div class="f"><label for="z_fssai">FSSAI</label><input id="z_fssai"></div>
+          <div class="f"><label for="z_upi">UPI ID for payments</label><input id="z_upi" placeholder="name@bank"></div>
+          <div class="f"><label for="z_prefix">Invoice number prefix</label><input id="z_prefix"></div>
+          <div class="f"><label for="z_next">Next invoice number</label><input type="number" id="z_next" min="1" step="1"></div>
+        </div>
+        <div class="actions" style="margin-top:12px"><button class="btn pri" type="submit">Save details</button></div>
+      </form>
+    </details>
+  </section>
+
+  <!-- PARTNERS -->
+  <section class="panel" id="p-partners" hidden>
+    <div class="work">
+      <form class="entry" id="fInv" novalidate>
+        <h3 id="fInvTitle">Record money in or out</h3>
+        <div class="pair">
+          <div class="f"><label for="i_date">Date</label><input type="date" id="i_date" required></div>
+          <div class="f"><label for="i_who">Person</label><input id="i_who" list="dl_par" placeholder="Name" required></div>
+        </div>
+        <div class="pair">
+          <div class="f"><label for="i_kind">Type</label><select id="i_kind"><option value="in">Invested</option><option value="out">Withdrew / payout</option></select></div>
+          <div class="f"><label for="i_amt">Amount (₹)</label><input type="number" id="i_amt" min="0" step="1" inputmode="numeric" required></div>
+        </div>
+        <div class="f"><label for="i_note">Note</label><input id="i_note" placeholder="Optional"></div>
+        <div class="actions"><button class="btn pri" type="submit">Save</button><button class="btn sec" type="button" data-cancel="inv" hidden>Cancel</button><button class="btn dng" type="button" data-del="inv" hidden>Delete</button></div>
+      </form>
+      <div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+        <div class="card"><h3>Who owns what <span>net capital · profit share (all time)</span></h3><div class="list" id="parList"></div></div>
+        <div class="tablewrap">
+          <div class="tablehead"><h3>Capital entries</h3><span id="invSum"></span></div>
+          <table><thead><tr><th>Date</th><th>Person</th><th>Type</th><th class="num">Amount</th><th>Note</th><th></th></tr></thead><tbody id="tInv"></tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EXPENSES -->
+  <section class="panel" id="p-expenses" hidden>
+    <div class="work">
+      <form class="entry" id="fExp" novalidate>
+        <h3 id="fExpTitle">Record an expense</h3>
+        <div class="pair">
+          <div class="f"><label for="e_date">Date</label><input type="date" id="e_date" required></div>
+          <div class="f"><label for="e_cat">Category</label><select id="e_cat">
+            <option>Packaging &amp; stickers</option><option>Transport / delivery</option><option>Ads &amp; marketing</option><option>Salary / labour</option><option>Breakage / damaged</option><option>Other</option></select></div>
+        </div>
+        <div class="f" id="e_amtF"><label for="e_amt">Amount (₹)</label><input type="number" id="e_amt" min="0" step="1" inputmode="numeric"></div>
+        <div class="f" id="e_eggF" hidden><label for="e_eggs">Eggs broken or spoiled</label><input type="number" id="e_eggs" min="0" step="1" inputmode="numeric"></div>
+        <div class="f"><label for="e_note">Note</label><input id="e_note" placeholder="Optional"></div>
+        <div class="preview" id="e_prev" hidden></div>
+        <div class="actions"><button class="btn pri" type="submit">Save expense</button><button class="btn sec" type="button" data-cancel="exp" hidden>Cancel</button><button class="btn dng" type="button" data-del="exp" hidden>Delete</button></div>
+      </form>
+      <div class="tablewrap">
+        <div class="tablehead"><h3>Expenses</h3><span id="expSum"></span></div>
+        <table><thead><tr><th>Date</th><th>Category</th><th class="num">Amount</th><th>Note</th><th></th></tr></thead><tbody id="tExp"></tbody></table>
+      </div>
+    </div>
+  </section>
+
+  <datalist id="dl_sup"></datalist><datalist id="dl_sel"></datalist><datalist id="dl_par"></datalist>
+</div>
+<nav class="bnav" aria-label="Sections">
+  <button type="button" data-t="overview" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button type="button" data-t="buying" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v3h16v-3"/></svg>Buy</button>
+  <button type="button" data-t="selling" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9m0 0l-4 4m4-4l4 4"/><path d="M4 7V4h16v3"/></svg>Sell</button>
+  <button type="button" data-t="invoices" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Bills</button>
+  <button type="button" data-t="partners" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><path d="M16 4.5a3 3 0 0 1 0 6M18 14.5c1.8.8 3 2.8 3 5.5"/></svg>Partners</button>
+  <button type="button" data-t="expenses" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18M7 15h3"/></svg>Costs</button>
+</nav>
+<div id="toast" hidden></div>
+</div>
+<script src="config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
