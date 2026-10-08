@@ -1,0 +1,66 @@
+name: Android app
+
+# Builds a signed Star Eggs APK whenever the app changes, and attaches it to a GitHub release.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'www/**'
+      - 'android/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      VERSION_CODE: ${{ github.run_number }}
+      VERSION_NAME: 1.1.${{ github.run_number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Copy the web app into the Android project
+        run: npx cap sync android
+
+      - name: Build signed APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Name the APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk "StarEggs-${VERSION_NAME}.apk"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: StarEggs-${{ env.VERSION_NAME }}
+          path: StarEggs-*.apk
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-v${{ env.VERSION_NAME }}
+          name: Star Eggs app ${{ env.VERSION_NAME }}
+          body: Install StarEggs-${{ env.VERSION_NAME }}.apk on Android. Updates install over the old version and keep the login.
+          files: StarEggs-*.apk
+          make_latest: true

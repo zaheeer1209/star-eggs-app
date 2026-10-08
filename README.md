@@ -10,17 +10,27 @@ A business ledger for Star Eggs that can be installed on a phone. It tracks:
 - Profit
 - Invoices, as PDF files or WhatsApp messages
 
-It is a plain static site with no build step. Data and logins live in Supabase.
+Every new sale makes its invoice straight away and opens it ready to share as a PDF or on WhatsApp. You can turn this off with the switch on the sale form.
+
+The same code runs two ways:
+
+- **Website / web app** on Vercel, served from `www/`.
+- **Android app (APK)** built by GitHub Actions with Capacitor.
+
+Data and logins live in Supabase.
 
 ```
-index.html            app screens and login
-styles.css            design
-app.js                all app logic
-config.js             your Supabase URL and anon key  ← edit this
-schema.sql            database tables and access rules ← run once in Supabase
-sw.js                 offline shell so it installs like an app
-manifest.webmanifest  app name, icon and colours for "Install"
-icons/                app icons
+www/                  the app (web and Android share it)
+  index.html            screens and login
+  styles.css            design
+  app.js                all app logic
+  config.js             Supabase URL and anon key
+  vendor/               Supabase and PDF libraries (bundled so the app works without CDNs)
+  sw.js, manifest.webmanifest, icons/   install-as-web-app pieces
+android/              native Android project (Capacitor), with icons and signing key
+.github/workflows/android.yml   builds the APK on every push
+schema.sql            database tables and access rules (run once in Supabase)
+vercel.json           tells Vercel to serve www/
 ```
 
 ## 1. Set up the database (Supabase, free)
@@ -58,7 +68,22 @@ To remove someone, delete their row from `members` and their user from Authentic
 
 Netlify, Cloudflare Pages or GitHub Pages work the same way, since it's just static files.
 
-## 3. Install it on phones
+## 3. Android app (APK)
+
+GitHub builds the app automatically after every push that changes `www/` or `android/`. This takes about 5 minutes.
+
+1. Open the repo on GitHub and go to **Releases** (right-hand side).
+2. Open the newest **Star Eggs app 1.1.x** and download `StarEggs-1.1.x.apk`.
+3. Send the APK to the phone, for example on WhatsApp to yourself, and open it.
+4. Android asks to allow installing from that app (WhatsApp, Files, Chrome). Allow it, then tap **Install**.
+
+Updates install over the old version and keep the login. To build one manually, go to **Actions → Android app → Run workflow**.
+
+The signing key is `android/app/star-eggs-release.keystore`, with its passwords in `android/keystore.properties`. Every update must be signed with this same key, so never delete or replace it. It's committed so the build works without setup. That's acceptable for a private repo and a sideloaded internal app, but before a Play Store release, move both into GitHub Secrets and remove them from the repo.
+
+**iPhone:** this needs a Mac with Xcode and an Apple Developer account (₹8,700/yr) to put on other people's phones. Until then, iPhone users can use the web app via **Share → Add to Home Screen**.
+
+## 4. Install the web app on phones
 
 - **Android (Chrome):** open the link and tap **Install app** at the top, or use **⋮ → Add to Home screen**.
 - **iPhone (Safari):** open the link, tap **Share → Add to Home Screen**.
@@ -67,7 +92,7 @@ It then opens full-screen from its own icon. People stay signed in until they ta
 
 ## Updating the app
 
-1. Edit the files and push to GitHub. Vercel redeploys automatically.
+1. Edit the files in `www/` and push to GitHub. Vercel redeploys the website, and GitHub builds a new APK.
 2. Change `VERSION` in `sw.js` (e.g. `star-eggs-v2`) with every release so installed phones pick up the new files.
 
 ## Good to know

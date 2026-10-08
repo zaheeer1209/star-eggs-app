@@ -158,3 +158,14 @@ details.card[open] summary{margin-bottom:12px}
 @media (max-width:900px){.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2,.work{grid-template-columns:minmax(0,1fr)}}
 @media (max-width:420px){.wrap{padding-inline:16px}.kpi .val{font-size:1.3rem}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* auto-invoice */
+.toggle{display:flex;gap:8px;align-items:center;font-size:.9rem;font-weight:500;cursor:pointer}
+.toggle input{width:auto;accent-color:var(--yolk)}
+.sheet{position:fixed;inset:0;background:rgb(20 14 10/.55);z-index:20;display:flex;align-items:flex-end;justify-content:center;padding-top:env(safe-area-inset-top,0px)}
+.sheetbox{background:var(--bg);width:100%;max-width:720px;max-height:92vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px 16px calc(16px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px}
+.sheethead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.sheethead h3{font-size:1.2rem;margin-top:6px}
+.sheetactions{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:sticky;bottom:0;background:var(--bg);padding-top:6px}
+.sheetactions .btn{text-align:center;padding:12px}
+@media (min-width:721px){.sheet{align-items:center}.sheetbox{border-radius:16px}}

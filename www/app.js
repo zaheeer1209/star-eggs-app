@@ -198,9 +198,71 @@ function resetForm(k){
   const F=FORMS[k];$(F.form).reset();editing[k]=null;$(F.title).textContent=F.newT;
   document.querySelectorAll(`[data-cancel="${k}"],[data-del="${k}"]`).forEach(b=>{b.hidden=true;b.textContent=b.dataset.del?'Delete':'Cancel'});
   ['#b_date','#s_date','#i_date','#e_date'].forEach(s=>{if(!$(s).value)$(s).value=today()});
+  if(k==='sell'){$('#s_autoW').hidden=false;$('#s_auto').checked=autoPref();phoneAuto=true;sellLabel()}
   previews();
 }
+let phoneAuto=true;
+function autoPref(){try{return localStorage.getItem('se_auto')!=='0'}catch(e){return true}}
+function sellLabel(){$('#s_submit').textContent=editing.sell?'Save changes':($('#s_auto').checked?'Save sale & make invoice':'Save sale')}
+const lastInvFor=seller=>byDate(S.invoices.filter(x=>x.seller===seller))[0];
 function bad(msg){toast(msg);return null}
+
+/* ---------- sales: save, auto-invoice, keep invoice in sync ---------- */
+const lineOf=r=>({saleId:r.id,date:r.date,pack:r.pack,qty:r.qty,rate:r.rate,amount:r.amount,eggs:r.eggs,paid:r.paid});
+async function makeInvoice(saleIds,det){
+  const lines=S.sales.filter(r=>saleIds.includes(r.id)).sort((x,y)=>(x.date||'').localeCompare(y.date||'')).map(lineOf);
+  let n=+BIZ.next||1;while(S.invoices.some(x=>x.no===invNo(n)))n++;
+  const no=invNo(n);
+  const created=await db.insert('invoices',{no,date:det.date||today(),seller:det.seller,addr:det.addr||'',phone:det.phone||'',gstin:det.gstin||'',note:det.note||'',lines,total:sum(lines,'amount'),paid:sum(lines,'paid')});
+  for(const l of lines)await db.update('sales',l.saleId,{invoiceNo:no});
+  await db.saveSettings(Object.assign({},BIZ,{next:n+1}));
+  return created;
+}
+async function syncInvoiceForSale(r){
+  if(!r||!r.invoiceNo)return;
+  const inv=S.invoices.find(x=>x.no===r.invoiceNo);if(!inv)return;
+  const lines=inv.lines.map(l=>l.saleId===r.id?lineOf(r):l);
+  const patch={lines,total:sum(lines,'amount'),paid:sum(lines,'paid')};
+  if(lines.length===1)patch.seller=r.seller;
+  const ph=v('#s_phone');if(ph&&ph!==inv.phone)patch.phone=ph;
+  await db.update('invoices',inv.id,patch);
+}
+async function saveSale(id,data){
+  const btn=$('#s_submit');btn.disabled=true;
+  try{
+    if(id){
+      let row=null;
+      if(await guard((async()=>{row=await db.update('sales',id,data);await syncInvoiceForSale(row)})(),row?.invoiceNo?'Sale and invoice updated':'Changes saved'))resetForm('sell');
+      return;
+    }
+    const auto=$('#s_auto').checked,last=lastInvFor(data.seller),phone=v('#s_phone')||last?.phone||'';
+    let row=null;
+    if(!await guard((async()=>{row=await db.insert('sales',data)})(),auto?'Sale saved':'Sale saved'))return;
+    resetForm('sell');
+    if(!auto||!row)return;
+    let inv=null;
+    const ok=await guard((async()=>{inv=await makeInvoice([row.id],{date:row.date,seller:row.seller,phone,addr:last?.addr,gstin:last?.gstin})})(),'Invoice '+invNo(+BIZ.next||1)+' made');
+    if(ok&&inv)openSheet(inv.id);
+    else toast('Sale saved, but the invoice could not be made. Use Make bill on the sale to try again.');
+  }finally{btn.disabled=false}
+}
+$('#s_auto').addEventListener('change',()=>{try{localStorage.setItem('se_auto',$('#s_auto').checked?'1':'0')}catch(e){}sellLabel()});
+$('#s_seller').addEventListener('input',()=>{if(!phoneAuto&&v('#s_phone'))return;const ph=lastInvFor(v('#s_seller'))?.phone;$('#s_phone').value=ph||'';phoneAuto=true});
+$('#s_phone').addEventListener('input',()=>{phoneAuto=false});
+
+/* ---------- invoice sheet shown right after a sale ---------- */
+let sheetInv=null;
+function openSheet(id){
+  sheetInv=id;const inv=S.invoices.find(x=>x.id===id);if(!inv)return;
+  $('#sheetTitle').textContent='Invoice '+inv.no+' ready';
+  $('#sheetPaper').innerHTML=paperHTML(inv);$('#sheetWa').href=waLink(inv);
+  $('#invSheet').hidden=false;document.body.style.overflow='hidden';
+}
+function closeSheet(){$('#invSheet').hidden=true;document.body.style.overflow='';sheetInv=null}
+$('#sheetClose').onclick=closeSheet;
+$('#invSheet').addEventListener('click',e=>{if(e.target.id==='invSheet')closeSheet()});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#invSheet').hidden)closeSheet()});
+$('#sheetPdf').onclick=()=>{const inv=S.invoices.find(x=>x.id===sheetInv);if(inv)sharePdf(inv)};
 
 function readForm(k){
   if(k==='buy'){
@@ -234,7 +296,8 @@ function readForm(k){
 
 function fillForm(k,r){
   if(k==='buy'){$('#b_date').value=r.date||'';$('#b_sup').value=r.supplier||'';$('#b_unit').value=r.unit||'egg';$('#b_qty').value=r.qty??r.eggs;$('#b_rate').value=r.rate??(r.eggs?r.cost/r.eggs:0);$('#b_paid').value=r.paid??'';$('#b_note').value=r.note||''}
-  if(k==='sell'){$('#s_date').value=r.date||'';$('#s_seller').value=r.seller||'';$('#s_pack').value=r.pack||'12';$('#s_qty').value=r.qty;$('#s_rate').value=r.rate;$('#s_paid').value=r.paid??'';$('#s_note').value=r.note||''}
+  if(k==='sell'){$('#s_date').value=r.date||'';$('#s_seller').value=r.seller||'';$('#s_pack').value=r.pack||'12';$('#s_qty').value=r.qty;$('#s_rate').value=r.rate;$('#s_paid').value=r.paid??'';$('#s_note').value=r.note||'';
+    const inv=r.invoiceNo&&S.invoices.find(x=>x.no===r.invoiceNo);$('#s_phone').value=inv?.phone||lastInvFor(r.seller)?.phone||'';$('#s_autoW').hidden=true;sellLabel()}
   if(k==='inv'){$('#i_date').value=r.date||'';$('#i_who').value=r.partner||'';$('#i_kind').value=r.kind||'in';$('#i_amt').value=r.amount;$('#i_note').value=r.note||''}
   if(k==='exp'){$('#e_date').value=r.date||'';$('#e_cat').value=r.category;$('#e_amt').value=r.amount||'';$('#e_eggs').value=r.eggs||'';$('#e_note').value=r.note||''}
   previews();
@@ -258,6 +321,7 @@ Object.entries(FORMS).forEach(([k,F])=>{
     if(!db||!canWrite)return toast('Saving is not available in this view');
     const data=readForm(k);if(!data)return;
     const id=editing[k];
+    if(k==='sell')return saveSale(id,data);
     if(id){if(await guard(db.update(F.col,id,data),'Changes saved'))resetForm(k);}
     else{if(await guard(db.insert(F.col,data),'Saved'))resetForm(k);}
   });
@@ -360,13 +424,8 @@ $('#fBill').addEventListener('submit',async e=>{
   const d=draftInv();
   if(!d.seller)return toast('Pick a seller');
   if(!d.lines.length)return toast('Tick at least one order');
-  const inv={no:d.no,date:d.date,seller:d.seller,addr:d.addr,phone:d.phone,gstin:d.gstin,note:d.note,lines:d.lines,total:d.total,paid:d.paid};
   let created=null;
-  const ok=await guard((async()=>{
-    created=await db.insert('invoices',inv);
-    for(const l of d.lines){if(S.sales.some(x=>x.id===l.saleId))await db.update('sales',l.saleId,{invoiceNo:d.no})}
-    await db.saveSettings(Object.assign({},BIZ,{next:d.num+1}));
-  })(),'Invoice '+d.no+' created');
+  const ok=await guard((async()=>{created=await makeInvoice(d.lines.map(l=>l.saleId),d)})(),'Invoice '+d.no+' created');
   if(ok&&created){curInv=created.id;$('#v_note').value='';pickSeller=null;renderInvoices();revealInvoice()}
 });
 $('#invNew').onclick=()=>{curInv=null;$('#fBill').reset();$('#v_date').value=today();pickSeller=null;renderInvoices();$('#v_seller').focus()};
@@ -386,18 +445,36 @@ document.addEventListener('click',e=>{
   const bb=e.target.closest('[data-bill]');
   if(bb){const r=S.sales.find(x=>x.id===bb.dataset.bill);if(!r)return;curInv=null;$('#v_seller').value=r.seller;pickSeller=r.seller;picked=new Set([r.id]);prefillBillTo(r.seller);$('#v_date').value=today();showTab('invoices');renderInvoices()}
 });
-$('#pdfBtn').onclick=async()=>{
-  const inv=S.invoices.find(x=>x.id===curInv);if(!inv)return;
-  if(!window.jspdf){toast('PDF maker did not load. Check your connection and reload.');return}
-  const file=new File([makePdf(inv)],inv.no+'.pdf',{type:'application/pdf'});
+$('#pdfBtn').onclick=()=>{const inv=S.invoices.find(x=>x.id===curInv);if(inv)sharePdf(inv)};
+const NATIVE=!!(window.Capacitor&&window.Capacitor.isNativePlatform&&window.Capacitor.isNativePlatform());
+let nativePlugins=null;
+function plugins(){if(!nativePlugins)nativePlugins={fs:window.Capacitor.registerPlugin('Filesystem'),share:window.Capacitor.registerPlugin('Share')};return nativePlugins}
+function toBase64(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i+=0x8000)s+=String.fromCharCode.apply(null,b.subarray(i,i+0x8000));return btoa(s)}
+async function sharePdf(inv){
+  if(!window.jspdf){toast('PDF maker did not load. Reopen the app and try again.');return}
+  const buf=makePdf(inv),name=inv.no+'.pdf',title=(BIZ.name||'Star Eggs')+' '+inv.no;
+  if(NATIVE){
+    try{
+      const {fs,share}=plugins();
+      const res=await fs.writeFile({path:name,data:toBase64(buf),directory:'CACHE'});
+      await share.share({title,dialogTitle:'Send '+inv.no,files:[res.uri]});
+    }catch(err){if(!/cancel/i.test(String(err&&err.message||err)))toast('Could not open sharing. Try again.')}
+    return;
+  }
+  const file=new File([buf],name,{type:'application/pdf'});
   if(canShareFiles){
-    try{await navigator.share({files:[file],title:(BIZ.name||'Star Eggs')+' '+inv.no});return}
+    try{await navigator.share({files:[file],title});return}
     catch(err){if(err&&err.name==='AbortError')return}
   }
   const url=URL.createObjectURL(file),a=document.createElement('a');
-  a.href=url;a.download=file.name;document.body.appendChild(a);a.click();a.remove();
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),5000);toast('PDF saved');
-};
+}
+// In the Android app, open WhatsApp links through the system so WhatsApp itself opens.
+document.addEventListener('click',e=>{
+  if(!NATIVE)return;const a=e.target.closest('a[href^="https://wa.me/"]');if(!a)return;
+  e.preventDefault();window.location.href=a.href;
+});
 function makePdf(inv){
   const {jsPDF}=window.jspdf,d=new jsPDF({unit:'mm',format:'a4'}),W=210,M=16;
   const rs=n=>'Rs. '+(Math.round(n*100)/100).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -518,7 +595,7 @@ async function loadAll(){
 
 /* ---------- sign in & start ---------- */
 const canShareFiles=(()=>{try{return !!(navigator.canShare&&navigator.canShare({files:[new File(['x'],'x.pdf',{type:'application/pdf'})]}))}catch(e){return false}})();
-$('#pdfBtn').textContent=canShareFiles?'Share PDF':'Download PDF';
+$('#pdfBtn').textContent=$('#sheetPdf').textContent=(NATIVE||canShareFiles)?'Share PDF':'Download PDF';
 
 function showLogin(msg){
   $('#app').hidden=true;$('#login').hidden=false;
@@ -571,14 +648,15 @@ $('#signOut').onclick=async()=>{await sb.auth.signOut();location.reload()};
 })();
 
 /* ---------- install as app ---------- */
-if('serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
+if(NATIVE)document.documentElement.classList.add('native');
+if(!NATIVE&&'serviceWorker' in navigator){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}
 let installEvt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;$('#installBtn').hidden=false});
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();if(NATIVE)return;installEvt=e;$('#installBtn').hidden=false});
 $('#installBtn').onclick=async()=>{if(!installEvt)return;installEvt.prompt();await installEvt.userChoice;installEvt=null;$('#installBtn').hidden=true};
 window.addEventListener('appinstalled',()=>{$('#installBtn').hidden=true;toast('Star Eggs installed')});
 const standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone;
 const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
 let tipSeen=false;try{tipSeen=localStorage.getItem('se_iostip')==='1'}catch(e){}
-if(ios&&!standalone&&!tipSeen)$('#iosTip').hidden=false;
+if(ios&&!standalone&&!tipSeen&&!NATIVE)$('#iosTip').hidden=false;
 $('#iosTipClose').onclick=()=>{$('#iosTip').hidden=true;try{localStorage.setItem('se_iostip','1')}catch(e){}};
 })();

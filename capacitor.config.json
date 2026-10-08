@@ -1,0 +1,9 @@
+{
+  "appId": "in.stareggs.ledger",
+  "appName": "Star Eggs",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#F3F1EB",
+    "adjustMarginsForEdgeToEdge": "auto"
+  }
+}
