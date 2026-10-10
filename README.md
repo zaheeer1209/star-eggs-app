@@ -29,11 +29,16 @@ www/                  the app (web and Android share it)
   sw.js, manifest.webmanifest, icons/   install-as-web-app pieces
 android/              native Android project (Capacitor), with icons and signing key
 .github/workflows/android.yml   builds the APK on every push
-store/                the public online shop (its own Vercel project)
+supabase/functions/whatsapp/   WhatsApp ordering bot (see its README for setup)
+store/                the public online shop (its own Vercel project, optional)
 schema.sql            database tables and access rules (run once in Supabase)
 migrations/           database updates to run in order (002 = online shop)
 vercel.json           tells Vercel to serve www/
 ```
+
+## WhatsApp ordering bot
+
+Customers order by chatting with the Star Eggs WhatsApp number. Orders go straight into the app's **Orders** tab, tagged **WhatsApp**, and customers get automatic updates when you confirm, dispatch or deliver. Setup steps are in `supabase/functions/whatsapp/README.md`.
 
 ## Online shop
 

@@ -205,3 +205,4 @@ details.card[open] summary{margin-bottom:12px}
 @media (max-width:720px){.orders{grid-template-columns:minmax(0,1fr)}}
 #fShop .meta{color:var(--muted);font-size:.85rem;margin:0}
 .order .meta{color:var(--muted);font-weight:400}
+.chip.wa{background:var(--good-soft);color:var(--good)}

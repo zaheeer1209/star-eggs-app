@@ -664,7 +664,7 @@ function orderCard(o){
   if(can&&ACTIVE.includes(o.status))acts+=`<button class="btn dng" type="button" data-oact="cancelled" data-id="${id}">Cancel</button>`;
   return `<article class="order${o.status==='new'?' fresh':''}">
     <div class="otop"><div><div class="no">${esc(o.order_no)}</div><div class="when">${whenStr(o.created_at)}</div></div>
-      <div class="chips"><span class="chip ${st[1]}">${st[0]}</span><span class="chip ${py[1]}">${o.payment_method==='cod'?'COD':'UPI'} · ${py[0]}</span></div></div>
+      <div class="chips">${o.source==='whatsapp'?'<span class="chip wa">WhatsApp</span>':''}<span class="chip ${st[1]}">${st[0]}</span><span class="chip ${py[1]}">${o.payment_method==='cod'?'COD':'UPI'} · ${py[0]}</span></div></div>
     <div><div class="who">${esc(o.name)} · <span class="meta">${esc(o.phone)}</span></div><div class="addr">${esc(addr)}</div>${o.note?`<div class="addr">Note: ${esc(o.note)}</div>`:''}</div>
     <div class="items"><span>${esc(items)}</span><b>${inr(o.total)}</b></div>
     ${o.payment_status==='claimed'?`<div class="utr">Customer says they paid by UPI${o.utr?' · ref <b>'+esc(o.utr)+'</b>':''}. Check your UPI app, then tap Mark paid.</div>`:''}
