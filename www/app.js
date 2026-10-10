@@ -6,7 +6,7 @@ const FORMS={buy:{col:'purchases',form:'#fBuy',title:'#fBuyTitle',newT:'Record a
   sell:{col:'sales',form:'#fSell',title:'#fSellTitle',newT:'Record a sale',editT:'Edit sale'},
   inv:{col:'investments',form:'#fInv',title:'#fInvTitle',newT:'Record money in or out',editT:'Edit entry'},
   exp:{col:'expenses',form:'#fExp',title:'#fExpTitle',newT:'Record an expense',editT:'Edit expense'}};
-const S={purchases:[],sales:[],investments:[],expenses:[],invoices:[]};
+const S={purchases:[],sales:[],investments:[],expenses:[],invoices:[],orders:[]};
 const NCOL=Object.keys(S).length;
 const loaded=new Set();
 let db=null, sb=null, canWrite=true, period='all';
@@ -106,6 +106,7 @@ function render(){
   renderTables(c);
   lists();
   if(typeof renderInvoices==='function')renderInvoices();
+  if(typeof renderOrders==='function')renderOrders();
 }
 
 function partnerRows(A){
@@ -218,13 +219,13 @@ async function makeInvoice(saleIds,det){
   await db.saveSettings(Object.assign({},BIZ,{next:n+1}));
   return created;
 }
-async function syncInvoiceForSale(r){
+async function syncInvoiceForSale(r,phoneOverride){
   if(!r||!r.invoiceNo)return;
   const inv=S.invoices.find(x=>x.no===r.invoiceNo);if(!inv)return;
   const lines=inv.lines.map(l=>l.saleId===r.id?lineOf(r):l);
   const patch={lines,total:sum(lines,'amount'),paid:sum(lines,'paid')};
   if(lines.length===1)patch.seller=r.seller;
-  const ph=v('#s_phone');if(ph&&ph!==inv.phone)patch.phone=ph;
+  const ph=phoneOverride===undefined?v('#s_phone'):phoneOverride;if(ph&&ph!==inv.phone)patch.phone=ph;
   await db.update('invoices',inv.id,patch);
 }
 async function saveSale(id,data){
@@ -606,9 +607,135 @@ function lockForms(){document.querySelectorAll('form.entry button[type=submit]')
 
 /* ---------- boot ---------- */
 try{const t=location.hash.slice(1)||localStorage.getItem('se_tab');if(t&&FORMS&&document.getElementById('p-'+t))showTab(t)}catch(e){}
+
+
+/* ---------- online orders ---------- */
+const DEFSHOP={store_open:true,price_12:240,price_30:600,stock_12:true,stock_30:true,min_order:0,delivery_pincodes:'',delivery_note:'Delivered across Hyderabad within 24 hours.',whatsapp:'',email:'',cod_enabled:true};
+let SHOP=Object.assign({},DEFSHOP),storeMissing=false,orderFilter='active';
+const ACTIVE=['new','confirmed','out_for_delivery'];
+const OSTAT={new:['New','bad'],confirmed:['Confirmed','warn'],out_for_delivery:['Out for delivery','warn'],delivered:['Delivered','good'],cancelled:['Cancelled','plain']};
+const OPAY={pending:['Not paid','plain'],claimed:['Says paid · check','warn'],paid:['Paid','good']};
+const packName2=p=>p==='12'?'Box of 12':p==='30'?'Tray of 30':p;
+function whenStr(ts){
+  const d=new Date(ts);if(isNaN(d))return'';
+  const t=d.toLocaleTimeString('en-IN',{hour:'numeric',minute:'2-digit'});
+  const day=isoOf(d)===today()?'Today':isoOf(d)===isoOf(new Date(Date.now()-864e5))?'Yesterday':fmtDate(isoOf(d));
+  return day+', '+t;
+}
+function custMsg(o,kind){
+  const items=(o.items||[]).map(i=>i.qty+' × '+packName2(i.pack)).join(', ');
+  const name=(o.name||'').split(' ')[0];
+  const head={confirmed:`your ${BIZ.name||'Star Eggs'} order ${o.order_no} (${items}, ${inr(o.total)}) is confirmed. ${SHOP.delivery_note||''}`,
+    out_for_delivery:`your ${BIZ.name||'Star Eggs'} order ${o.order_no} is out for delivery and will reach you soon.`,
+    delivered:`your ${BIZ.name||'Star Eggs'} order ${o.order_no} has been delivered. Thank you!`,
+    cancelled:`your ${BIZ.name||'Star Eggs'} order ${o.order_no} has been cancelled. Message us if you have any questions.`}[kind]||`about your ${BIZ.name||'Star Eggs'} order ${o.order_no}:`;
+  let t=`Hi ${name}, ${head}`;
+  if(kind!=='cancelled'&&o.payment_status!=='paid'){t+=o.payment_method==='upi'&&BIZ.upi?`\nTo pay ${inr(o.total)} by UPI: ${BIZ.upi}`:`\nPlease keep ${inr(o.total)} ready on delivery (cash or UPI).`}
+  return t;
+}
+const custWa=(o,kind)=>'https://wa.me/'+phoneDigits(o.phone)+'?text='+encodeURIComponent(custMsg(o,kind));
+function renderOrders(){
+  if(!$('#orderList'))return;
+  const O=S.orders.slice().sort((a,b)=>(b.created_at||'').localeCompare(a.created_at||''));
+  const newCount=O.filter(o=>o.status==='new').length,active=O.filter(o=>ACTIVE.includes(o.status)).length;
+  document.querySelectorAll('[data-badge]').forEach(b=>{b.hidden=!newCount;b.textContent=newCount});
+  $('#ofActive').textContent=active?'('+active+')':'';
+  $('#storeMissing').hidden=!storeMissing;
+  $('#shopState').textContent=storeMissing?'Shop not set up':SHOP.store_open?'Shop open':'Shop closed';
+  $('#shopState').className='chip '+(storeMissing?'plain':SHOP.store_open?'good':'bad');
+  const list=O.filter(o=>orderFilter==='all'||(orderFilter==='active'?ACTIVE.includes(o.status):o.status===orderFilter));
+  $('#orderList').innerHTML=list.length?list.map(orderCard).join(''):`<div class="empty">${orderFilter==='active'?'No orders waiting. New ones from the shop appear here straight away.':'Nothing here yet.'}</div>`;
+}
+function orderCard(o){
+  const st=OSTAT[o.status]||[o.status,'plain'],py=OPAY[o.payment_status]||[o.payment_status,'plain'];
+  const items=(o.items||[]).map(i=>`${i.qty} × ${packName2(i.pack)}`).join(', ');
+  const addr=[o.address,o.area,o.pincode].filter(Boolean).join(', ');
+  const id=esc(o.id),can=canWrite;
+  let acts='';
+  if(can){
+    if(o.status==='new')acts+=`<button class="btn pri" type="button" data-oact="confirmed" data-id="${id}">Confirm</button>`;
+    if(o.status==='confirmed')acts+=`<button class="btn pri" type="button" data-oact="out_for_delivery" data-id="${id}">Out for delivery</button>`;
+    if(o.status==='out_for_delivery'||o.status==='confirmed')acts+=`<button class="btn ${o.status==='out_for_delivery'?'pri':'sec'}" type="button" data-oact="delivered" data-id="${id}">Delivered</button>`;
+    if(o.payment_status!=='paid'&&o.status!=='cancelled')acts+=`<button class="btn sec" type="button" data-oact="paid" data-id="${id}">Mark paid</button>`;
+  }
+  const waKind=o.status==='new'?'confirmed':o.status;
+  acts+=`<a class="btn wa" href="${esc(custWa(o,waKind))}" target="_blank" rel="noopener">WhatsApp</a>`;
+  if(o.invoice_no)acts+=`<button class="btn sec" type="button" data-viewinv="${esc(o.invoice_no)}">Bill ${esc(o.invoice_no)}</button>`;
+  if(can&&ACTIVE.includes(o.status))acts+=`<button class="btn dng" type="button" data-oact="cancelled" data-id="${id}">Cancel</button>`;
+  return `<article class="order${o.status==='new'?' fresh':''}">
+    <div class="otop"><div><div class="no">${esc(o.order_no)}</div><div class="when">${whenStr(o.created_at)}</div></div>
+      <div class="chips"><span class="chip ${st[1]}">${st[0]}</span><span class="chip ${py[1]}">${o.payment_method==='cod'?'COD':'UPI'} · ${py[0]}</span></div></div>
+    <div><div class="who">${esc(o.name)} · <span class="meta">${esc(o.phone)}</span></div><div class="addr">${esc(addr)}</div>${o.note?`<div class="addr">Note: ${esc(o.note)}</div>`:''}</div>
+    <div class="items"><span>${esc(items)}</span><b>${inr(o.total)}</b></div>
+    ${o.payment_status==='claimed'?`<div class="utr">Customer says they paid by UPI${o.utr?' · ref <b>'+esc(o.utr)+'</b>':''}. Check your UPI app, then tap Mark paid.</div>`:''}
+    <div class="acts">${acts}</div>
+  </article>`;
+}
+async function setOrder(o,patch){return db.update('orders',o.id,Object.assign({updated_at:new Date().toISOString()},patch))}
+async function deliverOrder(o){
+  const paid=o.payment_status==='paid',ids=[];
+  const existing=S.sales.filter(x=>x.order_no===o.order_no);
+  if(existing.length)existing.forEach(x=>ids.push(x.id));
+  else for(const it of o.items||[]){
+    const qty=+it.qty,amount=+it.amount;
+    const row=await db.insert('sales',{date:today(),seller:o.name,pack:String(it.pack),qty,rate:+it.rate,eggs:qty*(+it.pack||1),amount,paid:paid?amount:0,note:'Online order '+o.order_no,order_no:o.order_no});
+    ids.push(row.id);
+  }
+  let invNoNow=(S.sales.find(x=>ids.includes(x.id)&&x.invoiceNo)||{}).invoiceNo,inv=null;
+  if(!invNoNow){inv=await makeInvoice(ids,{date:today(),seller:o.name,phone:o.phone,addr:[o.address,o.area,o.pincode].filter(Boolean).join(', '),note:'Online order '+o.order_no});invNoNow=inv.no}
+  else inv=S.invoices.find(x=>x.no===invNoNow);
+  await setOrder(o,{status:'delivered',sale_ids:ids,invoice_no:invNoNow});
+  return inv;
+}
+async function markOrderPaid(o){
+  await setOrder(o,{payment_status:'paid'});
+  for(const sale of S.sales.filter(x=>x.order_no===o.order_no&&(+x.paid||0)<(+x.amount||0))){
+    const row=await db.update('sales',sale.id,{paid:sale.amount});
+    await syncInvoiceForSale(row,null);
+  }
+}
+document.addEventListener('click',async e=>{
+  const f=e.target.closest('[data-of]');
+  if(f){orderFilter=f.dataset.of;document.querySelectorAll('[data-of]').forEach(x=>x.setAttribute('aria-pressed',x===f));renderOrders();return}
+  const b=e.target.closest('[data-oact]');if(!b)return;
+  const o=S.orders.find(x=>x.id===b.dataset.id);if(!o||!db||!canWrite)return;
+  const act=b.dataset.oact;
+  if(act==='cancelled'&&b.textContent!=='Tap again to cancel'){b.textContent='Tap again to cancel';return}
+  b.disabled=true;
+  if(act==='delivered'){
+    let inv=null;
+    if(await guard((async()=>{inv=await deliverOrder(o)})(),'Delivered · sale and bill made')&&inv)openSheet(inv.id);
+  }else if(act==='paid'){
+    await guard(markOrderPaid(o),'Marked paid');
+  }else{
+    await guard(setOrder(o,{status:act}),{confirmed:'Order confirmed',out_for_delivery:'Marked out for delivery',cancelled:'Order cancelled'}[act]);
+  }
+  b.disabled=false;
+});
+function fillShop(){
+  if(!$('#fShop')||$('#fShop').contains(document.activeElement))return;
+  $('#h_open').checked=!!SHOP.store_open;$('#h_s12').checked=!!SHOP.stock_12;$('#h_s30').checked=!!SHOP.stock_30;$('#h_cod').checked=!!SHOP.cod_enabled;
+  $('#h_p12').value=SHOP.price_12;$('#h_p30').value=SHOP.price_30;$('#h_min').value=+SHOP.min_order||'';
+  $('#h_pins').value=SHOP.delivery_pincodes||'';$('#h_note').value=SHOP.delivery_note||'';$('#h_wa').value=SHOP.whatsapp||'';$('#h_email').value=SHOP.email||'';
+}
+$('#fShop').addEventListener('submit',async e=>{
+  e.preventDefault();
+  if(!db||!canWrite)return toast('Saving is not available in this view');
+  if(storeMissing)return toast('Run the online-store database update first (see the note above).');
+  const p12=n('#h_p12'),p30=n('#h_p30');
+  if(!(p12>0)||!(p30>0))return toast('Enter both pack prices');
+  const pins=v('#h_pins').split(/[^0-9]+/).filter(Boolean);
+  if(pins.some(p=>!/^[1-9]\d{5}$/.test(p)))return toast('Each pincode must be 6 digits');
+  const ns={store_open:$('#h_open').checked,price_12:p12,price_30:p30,stock_12:$('#h_s12').checked,stock_30:$('#h_s30').checked,cod_enabled:$('#h_cod').checked,
+    min_order:Math.max(0,n('#h_min')||0),delivery_pincodes:pins.join(', '),delivery_note:v('#h_note'),whatsapp:v('#h_wa'),email:v('#h_email')};
+  if(await guard(db.saveSettings(ns),'Shop settings saved')){document.activeElement.blur();renderOrders()}
+});
+
+/* ---------- first paint ---------- */
 resetForm('buy');resetForm('sell');resetForm('inv');resetForm('exp');
 $('#v_date').value=today();fillBiz();
 render();
+fillShop();
 
 /* ---------- Supabase data layer ---------- */
 const TABLES=Object.keys(S);
@@ -629,6 +756,7 @@ function upsertLocal(t,row){
   if(t==='settings'){applySettings(row);return}
   if(!S[t]||!row)return;
   const r=norm(t,row),i=S[t].findIndex(x=>x.id===r.id);
+  if(t==='orders'&&i<0&&r.status==='new'&&loaded.has('orders'))toast('New online order '+r.order_no+' · '+inr(r.total));
   if(i>=0)S[t][i]=r;else S[t].push(r);
   scheduleRender();
 }
@@ -637,7 +765,8 @@ function applySettings(row){
   const r=norm('settings',row);BIZ=Object.assign({},DEFBIZ);
   ['name','addr','phone','gstin','fssai','upi','prefix','next','title'].forEach(k=>{if(r[k]!=null&&r[k]!=='')BIZ[k]=r[k]});
   if(r.prefix==='')BIZ.prefix='';
-  fillBiz();renderInvoices();
+  SHOP=Object.assign({},DEFSHOP);Object.keys(DEFSHOP).forEach(k=>{if(r[k]!=null)SHOP[k]=r[k]});
+  fillBiz();fillShop();renderInvoices();renderOrders();
 }
 const api={
   async insert(t,d){const {data,error}=await sb.from(t).insert(clean(t,d)).select().single();if(error)throw error;upsertLocal(t,data);return norm(t,data)},
@@ -654,7 +783,7 @@ async function fetchAll(t){
   return out;
 }
 async function loadAll(){
-  const rows=await Promise.all(TABLES.map(fetchAll));
+  const rows=await Promise.all(TABLES.map(t=>fetchAll(t).then(r=>{if(t==='orders')storeMissing=false;return r}).catch(e=>{if(t==='orders'){storeMissing=true;console.warn('orders',e);return []}throw e})));
   rows.forEach((data,i)=>{const t=TABLES[i];S[t]=data.map(x=>norm(t,x));loaded.add(t)});
   const st=await sb.from('settings').select('*').eq('id',1).maybeSingle();
   if(st.data)applySettings(st.data);

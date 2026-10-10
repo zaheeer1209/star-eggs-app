@@ -29,9 +29,36 @@ www/                  the app (web and Android share it)
   sw.js, manifest.webmanifest, icons/   install-as-web-app pieces
 android/              native Android project (Capacitor), with icons and signing key
 .github/workflows/android.yml   builds the APK on every push
+store/                the public online shop (its own Vercel project)
 schema.sql            database tables and access rules (run once in Supabase)
+migrations/           database updates to run in order (002 = online shop)
 vercel.json           tells Vercel to serve www/
 ```
+
+## Online shop
+
+Customers order from the shop in `store/`:
+1. They pick boxes of 12 or trays of 30.
+2. They give their address and pincode.
+3. They pay by UPI (a button for phones, a QR code for computers) or cash on delivery.
+
+Each order gets a number like `ORD-1001`. Customers can track it on the shop and send it to you on WhatsApp.
+
+Orders appear live in the app's **Orders** tab:
+- **New** orders show a red badge.
+- Tap **Confirm**, then **Out for delivery**, then **Delivered**. Delivered turns the order into sales and makes the bill, ready to send on WhatsApp.
+- If a UPI customer taps "I've paid", the card shows their UPI reference. Check it in your UPI app before tapping **Mark paid**.
+
+Prices, stock, pincodes, minimum order and cash on delivery are set in **Orders → Online shop settings**. The business name, address, phone, UPI ID and FSSAI number come from **Invoices → Business details**.
+
+The database works out every price and total itself, checks pincodes and stock, and limits repeat orders. Customers can't see other people's orders or anything in the books.
+
+### Turn the shop on
+
+1. In Supabase, open **SQL Editor → New query**, paste `migrations/002_online_store.sql` and click **Run**. It's safe to run twice.
+2. On Vercel, click **Add New → Project** and import the same repo again. Under **Root Directory**, choose `store`, set Framework to **Other**, and click **Deploy**.
+3. In that project, go to **Settings → Domains** and add the shop domain, e.g. `stareggs.in`. You can point `app.stareggs.in` at the first project for the ledger.
+4. In the app, fill in the FSSAI number, UPI ID, phone and address under **Invoices → Business details**. Then set prices and pincodes under **Orders → Online shop settings**.
 
 ## 1. Set up the database (Supabase, free)
 
@@ -96,6 +123,8 @@ It then opens full-screen from its own icon. People stay signed in until they ta
 2. Change `VERSION` in `sw.js` (e.g. `star-eggs-v2`) with every release so installed phones pick up the new files.
 
 ## Good to know
+
+- **UPI on the shop:** use a business/merchant UPI ID (PhonePe Business, Paytm for Business, GPay for Business or a bank merchant QR). Some UPI apps block "pay with amount" links to personal UPI IDs.
 
 - **Free Supabase projects pause after about a week with no activity.** Daily use keeps it awake. If it ever pauses, click **Restore** in the Supabase dashboard; no data is lost.
 - **Backups:** the free plan has no automatic backups you can download. Every month or so, export each table as a CSV from **Table Editor → Export**, or upgrade to Pro for daily backups.

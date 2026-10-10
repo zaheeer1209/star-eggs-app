@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Star Eggs · Farm-fresh brown eggs, delivered in Hyderabad</title>
+<meta name="description" content="Order farm-fresh brown eggs from Star Eggs. 12-egg and 30-egg packs, delivered in Hyderabad. Pay by UPI or cash on delivery.">
+<meta property="og:title" content="Star Eggs">
+<meta property="og:description" content="Farm-fresh brown eggs, delivered in Hyderabad. Order in a minute, pay by UPI or cash.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#F6F1E7" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#17110C" media="(prefers-color-scheme: dark)">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="shop.css">
+</head>
+<body>
+<a class="skip" href="#packs">Skip to the packs</a>
+
+<header class="bar">
+  <div class="wrap barin">
+    <a class="logo" href="#top" aria-label="Star Eggs home">
+      <svg width="30" height="35" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="25" rx="17" ry="20" fill="var(--shell)" stroke="var(--soil)" stroke-width="2.4"/><path d="M20 15l3 6.2 6.8.9-5 4.7 1.3 6.7L20 30.3l-6.1 3.2 1.3-6.7-5-4.7 6.8-.9z" fill="var(--yolk)"/></svg>
+      <span>Star Eggs</span>
+    </a>
+    <nav class="barnav">
+      <a href="#track" data-view="track">Track order</a>
+      <button class="cartbtn" type="button" id="cartTop" aria-label="Basket">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h16l-1.4 9.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8z"/><path d="M8.5 9 11 4M15.5 9 13 4"/></svg>
+        <span id="cartCount">0</span>
+      </button>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div id="closed" class="closed" hidden><div class="wrap">We're not taking online orders right now. Message us on WhatsApp and we'll help you directly.</div></div>
+
+  <!-- SHOP -->
+  <section id="v-shop" class="view">
+    <div class="hero wrap">
+      <div class="herotext">
+        <p class="eyebrow">Hyderabad · Home delivery</p>
+        <h1>Brown eggs, <span class="hl">farm&#8209;fresh</span>, at your door.</h1>
+        <p class="lede" id="deliveryNote">Delivered across Hyderabad within 24 hours.</p>
+        <div class="facts">
+          <span class="fact"><b>UPI</b> or cash on delivery</span>
+          <span class="fact" id="fssaiFact" hidden>FSSAI Lic. <b id="fssaiTop"></b></span>
+        </div>
+        <a class="btn pri big" href="#packs">Choose your pack</a>
+      </div>
+      <div class="heroart" aria-hidden="true">
+        <svg viewBox="0 0 360 300" class="tray">
+          <defs>
+            <radialGradient id="eggH" cx="38%" cy="32%" r="70%"><stop offset="0" stop-color="var(--egg-hi)"/><stop offset=".6" stop-color="var(--egg)"/><stop offset="1" stop-color="var(--egg-lo)"/></radialGradient>
+          </defs>
+          <path d="M28 120 Q180 70 332 120 L318 250 Q180 290 42 250 Z" fill="var(--tray)" />
+          <path d="M28 120 Q180 70 332 120" fill="none" stroke="var(--tray-line)" stroke-width="3"/>
+          <g id="heroEggs"></g>
+          <g transform="translate(250 34)">
+            <circle r="34" fill="var(--yolk)"/>
+            <path d="M0 -17 4.6 -6.4 16 -5.2 7.4 2.5 9.8 13.8 0 8 -9.8 13.8 -7.4 2.5 -16 -5.2 -4.6 -6.4Z" fill="var(--shell)"/>
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="wrap" id="packs">
+      <h2 class="sech">Pick a pack</h2>
+      <div class="packs">
+        <article class="pack" data-pack="12">
+          <div class="packart" aria-hidden="true"><svg viewBox="0 0 220 120" class="box12"></svg></div>
+          <div class="packbody">
+            <div class="packhead"><h3>Box of 12</h3><span class="stock" hidden>Sold out today</span></div>
+            <p class="packsub">Brown eggs in a carton. Right for a week of breakfasts.</p>
+            <div class="price"><b data-price>₹240</b><span data-per>₹20 an egg</span></div>
+            <div class="qty">
+              <button type="button" class="step" data-step="-1" aria-label="One less box of 12">−</button>
+              <output data-qty>0</output>
+              <button type="button" class="step" data-step="1" aria-label="One more box of 12">+</button>
+            </div>
+          </div>
+        </article>
+        <article class="pack" data-pack="30">
+          <div class="packart" aria-hidden="true"><svg viewBox="0 0 220 120" class="tray30"></svg></div>
+          <div class="packbody">
+            <div class="packhead"><h3>Tray of 30</h3><span class="stock" hidden>Sold out today</span></div>
+            <p class="packsub">A full tray for families, bakers and big appetites.</p>
+            <div class="price"><b data-price>₹600</b><span data-per>₹20 an egg</span></div>
+            <div class="qty">
+              <button type="button" class="step" data-step="-1" aria-label="One less tray of 30">−</button>
+              <output data-qty>0</output>
+              <button type="button" class="step" data-step="1" aria-label="One more tray of 30">+</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="how">
+        <div><b>1</b><span>Choose packs and add your address.</span></div>
+        <div><b>2</b><span>Pay by UPI now, or cash when the eggs arrive.</span></div>
+        <div><b>3</b><span>We confirm on WhatsApp and deliver.</span></div>
+      </div>
+    </div>
+
+    <!-- CHECKOUT -->
+    <div class="wrap" id="checkout" hidden>
+      <form class="card checkout" id="fOrder" novalidate>
+        <h2 class="sech">Your order</h2>
+        <div class="lines" id="lines"></div>
+        <div class="tot"><span>Total</span><b id="total">₹0</b></div>
+        <p class="minnote" id="minNote" hidden></p>
+
+        <h3 class="sub">Deliver to</h3>
+        <div class="grid2">
+          <div class="f"><label for="o_name">Your name</label><input id="o_name" autocomplete="name" maxlength="80" required></div>
+          <div class="f"><label for="o_phone">Mobile number</label><input id="o_phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="10-digit mobile" required></div>
+        </div>
+        <div class="f"><label for="o_addr">House / flat, street, landmark</label><textarea id="o_addr" rows="2" autocomplete="street-address" maxlength="400" required></textarea></div>
+        <div class="grid2">
+          <div class="f"><label for="o_area">Area</label><input id="o_area" placeholder="e.g. Tolichowki" maxlength="80"></div>
+          <div class="f"><label for="o_pin">Pincode</label><input id="o_pin" inputmode="numeric" autocomplete="postal-code" maxlength="6" required></div>
+        </div>
+        <p class="pinhint" id="pinHint" hidden></p>
+        <div class="f"><label for="o_note">Note for delivery</label><input id="o_note" placeholder="Optional, e.g. call before coming" maxlength="300"></div>
+
+        <h3 class="sub">Pay with</h3>
+        <div class="pay" role="radiogroup" aria-label="Payment">
+          <label class="payopt"><input type="radio" name="pay" value="upi" checked><span><b>UPI</b><small>GPay, PhonePe, Paytm or any UPI app</small></span></label>
+          <label class="payopt" id="codOpt"><input type="radio" name="pay" value="cod"><span><b>Cash on delivery</b><small>Pay cash or UPI when it arrives</small></span></label>
+        </div>
+        <p class="err" id="orderErr" hidden></p>
+        <button class="btn pri big full" type="submit" id="placeBtn">Place order</button>
+        <p class="fine">By ordering you agree to our <a href="policies.html">delivery, refund and privacy terms</a>.</p>
+      </form>
+    </div>
+  </section>
+
+  <!-- CONFIRMATION -->
+  <section id="v-done" class="view" hidden>
+    <div class="wrap narrow">
+      <div class="card done">
+        <div class="tick" aria-hidden="true"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+        <h2>Order <span id="dNo"></span> placed</h2>
+        <p class="lede" id="dLine"></p>
+
+        <div id="dUpi" class="upi" hidden>
+          <h3 class="sub">Pay <span id="dAmt"></span> by UPI</h3>
+          <a class="btn pri big full" id="upiLink" href="#">Pay with a UPI app</a>
+          <div class="qrwrap"><div id="qr" class="qr"></div><p>On a computer? Scan this with any UPI app.<br>UPI ID: <b id="dVpa"></b> <button class="link" type="button" id="copyVpa">Copy</button></p></div>
+          <form class="paid" id="fPaid" novalidate>
+            <label for="p_utr">Paid? Enter the 12-digit UPI reference so we can match it.</label>
+            <div class="row"><input id="p_utr" inputmode="numeric" placeholder="UPI reference / UTR" maxlength="30"><button class="btn sec" type="submit">I've paid</button></div>
+            <p class="ok" id="paidOk" hidden>Thanks. We'll check the payment and confirm.</p>
+          </form>
+        </div>
+        <p id="dCod" class="cod" hidden>Keep <b id="dCodAmt"></b> ready in cash or UPI when the eggs arrive.</p>
+
+        <a class="btn wa big full" id="waOrder" target="_blank" rel="noopener" hidden>Send order on WhatsApp</a>
+        <p class="fine">Save your order number. You can check it any time under <a href="#track" data-view="track">Track order</a>.</p>
+        <button class="btn sec full" type="button" id="again">Order more eggs</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- TRACK -->
+  <section id="v-track" class="view" hidden>
+    <div class="wrap narrow">
+      <form class="card trackf" id="fTrack" novalidate>
+        <h2>Track your order</h2>
+        <div class="grid2">
+          <div class="f"><label for="t_no">Order number</label><input id="t_no" placeholder="ORD-1001" autocapitalize="characters"></div>
+          <div class="f"><label for="t_phone">Mobile number</label><input id="t_phone" type="tel" inputmode="tel"></div>
+        </div>
+        <button class="btn pri full" type="submit">Check status</button>
+        <div id="recent" class="recent"></div>
+        <div id="trackOut"></div>
+      </form>
+      <button class="btn sec full" type="button" data-view="shop">Back to the shop</button>
+    </div>
+  </section>
+</main>
+
+<div class="cartbar" id="cartbar" hidden>
+  <div class="wrap cartin">
+    <div><b id="cbTotal">₹0</b><span id="cbItems"></span></div>
+    <button class="btn pri" type="button" id="toCheckout">Checkout</button>
+  </div>
+</div>
+
+<footer class="foot">
+  <div class="wrap footin">
+    <div>
+      <b class="fname" id="fName">Star Eggs</b>
+      <p id="fAddr"></p>
+      <p id="fContact"></p>
+    </div>
+    <div class="legal">
+      <p id="fFssai" hidden><span class="fssai">fssai</span> Lic. No. <b id="fFssaiNo"></b></p>
+      <p id="fGst" hidden>GSTIN <b id="fGstNo"></b></p>
+      <p><a href="policies.html">Delivery, refund &amp; privacy</a></p>
+    </div>
+  </div>
+</footer>
+
+<div id="toast" role="status" hidden></div>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="vendor/qrcode.js"></script>
+<script src="shop.js"></script>
+</body>
+</html>

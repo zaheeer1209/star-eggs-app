@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Star Eggs · Delivery, refund and privacy</title>
+<meta name="description" content="How Star Eggs delivers, handles cancellations and refunds, and looks after your details.">
+<link rel="icon" type="image/png" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="shop.css">
+<style>
+  .doc{max-width:720px;padding-block:28px 40px}
+  .doc h1{font-size:clamp(1.9rem,5vw,2.6rem);font-weight:800}
+  .doc h2{font-size:1.25rem;margin:28px 0 8px}
+  .doc p,.doc li{color:var(--ink);max-width:68ch}
+  .doc ul{padding-left:20px}
+  .doc .upd{color:var(--muted);font-size:.9rem}
+  .toc{display:flex;flex-wrap:wrap;gap:8px;margin:16px 0 4px}
+  .toc a{background:var(--chip);color:var(--ink);text-decoration:none;border-radius:999px;padding:6px 12px;font-size:.88rem;font-weight:600}
+</style>
+</head>
+<body>
+<header class="bar">
+  <div class="wrap barin">
+    <a class="logo" href="./" aria-label="Star Eggs shop">
+      <svg width="30" height="35" viewBox="0 0 40 46" aria-hidden="true"><ellipse cx="20" cy="25" rx="17" ry="20" fill="var(--shell)" stroke="var(--soil)" stroke-width="2.4"/><path d="M20 15l3 6.2 6.8.9-5 4.7 1.3 6.7L20 30.3l-6.1 3.2 1.3-6.7-5-4.7 6.8-.9z" fill="var(--yolk)"/></svg>
+      <span data-f="name">Star Eggs</span>
+    </a>
+    <nav class="barnav"><a href="./">Back to shop</a></nav>
+  </div>
+</header>
+
+<main class="wrap doc">
+  <h1>Delivery, refunds and privacy</h1>
+  <p class="upd">Last updated October 2026</p>
+  <nav class="toc"><a href="#delivery">Delivery</a><a href="#refunds">Cancellations &amp; refunds</a><a href="#payments">Payments</a><a href="#privacy">Privacy</a><a href="#contact">Contact &amp; grievances</a></nav>
+
+  <h2 id="delivery">Delivery</h2>
+  <ul>
+    <li>We deliver within Hyderabad to the pincodes our shop accepts. If your pincode isn't accepted, message us and we'll try to help.</li>
+    <li><span data-f="delivery_note">We aim to deliver within 24 hours of confirming your order.</span> We confirm every order by WhatsApp or phone first.</li>
+    <li>Please give a complete address and a mobile number we can reach. If we can't reach you at delivery, we'll call to arrange another time.</li>
+    <li>Eggs are fresh food. Keep them in a cool place or the fridge once they arrive.</li>
+  </ul>
+
+  <h2 id="refunds">Cancellations and refunds</h2>
+  <ul>
+    <li>You can cancel free of charge until your order is out for delivery. Message or call us with your order number.</li>
+    <li>If eggs arrive broken or not fresh, tell us within 24 hours of delivery and send a photo on WhatsApp. We'll replace them on the next delivery or refund those eggs.</li>
+    <li>Because eggs are perishable, we can't take back eggs that were delivered in good condition.</li>
+    <li>Refunds for UPI payments go back to the same UPI account within 5 working days of approval. Cash-on-delivery refunds are made by UPI or cash, whichever you prefer.</li>
+    <li>If we have to cancel an order (for example, if a pack sells out), we refund any payment in full.</li>
+  </ul>
+
+  <h2 id="payments">Payments</h2>
+  <ul>
+    <li>Prices on the shop are in Indian rupees and include all charges. There is no extra delivery fee unless the shop says so before you order.</li>
+    <li>You can pay by UPI when you order, or cash or UPI on delivery where offered. We check UPI payments against the reference number you give us before marking an order paid.</li>
+    <li>We never ask for your UPI PIN, card details or OTP. Never share them with anyone who says they're calling from Star Eggs.</li>
+  </ul>
+
+  <h2 id="privacy">Privacy</h2>
+  <ul>
+    <li>We collect your name, mobile number, delivery address and order details only to deliver your order and contact you about it.</li>
+    <li>We don't sell or share your details with anyone except as needed to deliver your order or when the law requires it.</li>
+    <li>Order records are stored securely with our database provider and kept for our accounts. You can ask us to delete your details at any time, except records we must keep for tax or legal reasons.</li>
+    <li>This shop doesn't use advertising trackers. Your browser remembers your basket and recent order numbers on your own device only.</li>
+  </ul>
+
+  <h2 id="contact">Contact and grievances</h2>
+  <p><b data-f="name">Star Eggs</b><br><span data-f="addr">Hyderabad, Telangana</span></p>
+  <p id="cPhone" hidden>Phone: <b data-f="phone"></b></p>
+  <p id="cWa" hidden>WhatsApp: <b data-f="whatsapp"></b></p>
+  <p id="cEmail" hidden>Email: <b data-f="email"></b></p>
+  <p>For any complaint, contact us with your order number. We acknowledge complaints within 48 hours and aim to resolve them within 7 days.</p>
+  <p id="cFssai" hidden><span class="fssai">fssai</span> Lic. No. <b data-f="fssai"></b></p>
+  <p id="cGst" hidden>GSTIN <b data-f="gstin"></b></p>
+</main>
+
+<script src="config.js"></script>
+<script src="vendor/supabase.js"></script>
+<script>
+(async function(){
+  const cfg = window.STAR_EGGS_CONFIG || {};
+  if (!window.supabase || !cfg.supabaseUrl) return;
+  try {
+    const sb = window.supabase.createClient(cfg.supabaseUrl, cfg.supabaseAnonKey, { auth: { persistSession: false } });
+    const { data } = await sb.rpc('store_info');
+    if (!data) return;
+    document.querySelectorAll('[data-f]').forEach(el => { const v = data[el.dataset.f]; if (v) el.textContent = v; });
+    const show = (id, v) => { document.getElementById(id).hidden = !v; };
+    show('cPhone', data.phone); show('cWa', data.whatsapp); show('cEmail', data.email);
+    show('cFssai', /^\d{14}$/.test(String(data.fssai || '').replace(/\s/g, ''))); show('cGst', data.gstin);
+  } catch (e) { console.warn(e); }
+})();
+</script>
+</body>
+</html>

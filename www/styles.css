@@ -141,8 +141,8 @@ details.card[open] summary{margin-bottom:12px}
 .bnav{display:none}
 @media (max-width:720px){
   nav.tabs{display:none}
-  .bnav{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 2px calc(6px + env(safe-area-inset-bottom,0px));z-index:8}
-  .bnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font:600 .66rem var(--f-body);color:var(--muted);padding:4px 0;cursor:pointer;min-width:0}
+  .bnav{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line);padding:6px 2px calc(6px + env(safe-area-inset-bottom,0px));z-index:8}
+  .bnav button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;font:600 .62rem var(--f-body);color:var(--muted);padding:4px 0;cursor:pointer;min-width:0}
   .bnav svg{width:22px;height:22px}
   .bnav button[aria-selected="true"]{color:var(--ink)}
   .bnav button[aria-selected="true"] svg{color:var(--yolk)}
@@ -178,3 +178,30 @@ details.card[open] summary{margin-bottom:12px}
 .sheetactions .big{grid-column:1/-1;font-size:1rem}
 .sheethint{grid-column:1/-1;margin:0;font-size:.82rem;color:var(--muted);text-align:center}
 .busy .btn{pointer-events:none;opacity:.6}
+
+/* online orders */
+.badge{display:inline-grid;place-items:center;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:var(--bad);color:#fff;font:700 .68rem var(--f-body);vertical-align:2px}
+.bnav .ico{position:relative;display:block;line-height:0}
+.bnav .ico .badge{position:absolute;top:-6px;right:-12px}
+.ordhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.filters{display:flex;gap:4px;background:var(--chip);padding:4px;border-radius:999px;overflow-x:auto;max-width:100%}
+.filters button{white-space:nowrap;border:0;background:transparent;color:var(--muted);font:600 .85rem var(--f-body);padding:6px 12px;border-radius:999px;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0/.08)}
+.orders{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px;margin-top:14px}
+.order{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.order.fresh{border-color:var(--yolk);box-shadow:0 0 0 3px var(--yolk-soft)}
+.order .otop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.order .no{font:700 1.05rem var(--f-display)}
+.order .when{font-size:.8rem;color:var(--muted)}
+.order .who{font-weight:600}
+.order .addr{font-size:.88rem;color:var(--muted);overflow-wrap:anywhere}
+.order .items{display:flex;justify-content:space-between;gap:10px;border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:8px 0;font-size:.92rem}
+.order .chips{display:flex;gap:6px;flex-wrap:wrap}
+.order .acts{display:flex;gap:8px;flex-wrap:wrap}
+.order .acts .btn{padding:8px 12px;font-size:.86rem}
+.order .utr{font-size:.85rem;background:var(--warn-soft);color:var(--warn);padding:6px 10px;border-radius:8px;overflow-wrap:anywhere}
+.btn.wa{text-decoration:none}
+#fShop{display:flex;flex-direction:column;gap:12px}
+@media (max-width:720px){.orders{grid-template-columns:minmax(0,1fr)}}
+#fShop .meta{color:var(--muted);font-size:.85rem;margin:0}
+.order .meta{color:var(--muted);font-weight:400}

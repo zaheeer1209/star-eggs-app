@@ -56,6 +56,7 @@
 
   <nav class="tabs" role="tablist">
     <button role="tab" data-t="overview" aria-selected="true">Overview</button>
+    <button role="tab" data-t="orders" aria-selected="false">Orders <span class="badge" data-badge hidden></span></button>
     <button role="tab" data-t="buying" aria-selected="false">Buying</button>
     <button role="tab" data-t="selling" aria-selected="false">Selling</button>
     <button role="tab" data-t="invoices" aria-selected="false">Invoices</button>
@@ -108,6 +109,41 @@
         </div>
       </div>
     </div>
+  </section>
+
+  <!-- ORDERS -->
+  <section class="panel" id="p-orders" hidden>
+    <div class="ordhead">
+      <div class="filters" role="group" aria-label="Show orders">
+        <button type="button" data-of="active" aria-pressed="true">To do <span id="ofActive"></span></button>
+        <button type="button" data-of="delivered" aria-pressed="false">Delivered</button>
+        <button type="button" data-of="cancelled" aria-pressed="false">Cancelled</button>
+        <button type="button" data-of="all" aria-pressed="false">All</button>
+      </div>
+      <span class="chip plain" id="shopState"></span>
+    </div>
+    <div id="storeMissing" class="notice" hidden>Online orders need a one-time database update. Run <b>migrations/002_online_store.sql</b> in Supabase → SQL Editor, then reopen the app.</div>
+    <div class="orders" id="orderList"></div>
+    <details class="card" id="shopCard" style="margin-top:16px">
+      <summary>Online shop settings</summary>
+      <form id="fShop" novalidate>
+        <label class="toggle"><input type="checkbox" id="h_open"> Shop is taking orders</label>
+        <div class="bizgrid">
+          <div class="f"><label for="h_p12">Box of 12 price (₹)</label><input type="number" id="h_p12" min="0" step="1" inputmode="numeric"></div>
+          <div class="f"><label for="h_p30">Tray of 30 price (₹)</label><input type="number" id="h_p30" min="0" step="1" inputmode="numeric"></div>
+          <div class="f"><label for="h_min">Minimum order (₹)</label><input type="number" id="h_min" min="0" step="1" inputmode="numeric" placeholder="0 = no minimum"></div>
+          <label class="toggle"><input type="checkbox" id="h_s12"> Box of 12 in stock</label>
+          <label class="toggle"><input type="checkbox" id="h_s30"> Tray of 30 in stock</label>
+          <label class="toggle"><input type="checkbox" id="h_cod"> Allow cash on delivery</label>
+          <div class="f" style="grid-column:1/-1"><label for="h_pins">Delivery pincodes (comma separated, blank = anywhere)</label><input id="h_pins" inputmode="numeric" placeholder="500008, 500028, 500034"></div>
+          <div class="f" style="grid-column:1/-1"><label for="h_note">Delivery line shown on the shop</label><input id="h_note" maxlength="140"></div>
+          <div class="f"><label for="h_wa">Orders WhatsApp number</label><input id="h_wa" inputmode="tel"></div>
+          <div class="f"><label for="h_email">Contact email</label><input id="h_email" type="email"></div>
+        </div>
+        <p class="meta">The shop also shows the business name, address, phone, UPI ID and FSSAI number from the business details on the Invoices tab.</p>
+        <div class="actions"><button class="btn pri" type="submit">Save shop settings</button></div>
+      </form>
+    </details>
   </section>
 
   <!-- BUYING -->
@@ -280,6 +316,7 @@
 </div>
 <nav class="bnav" aria-label="Sections">
   <button type="button" data-t="overview" aria-selected="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Home</button>
+  <button type="button" data-t="orders" aria-selected="false"><span class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h16l-1.4 9.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8z"/><path d="M8.5 9 11 4M15.5 9 13 4"/></svg><span class="badge" data-badge hidden></span></span>Orders</button>
   <button type="button" data-t="buying" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0l-4-4m4 4l4-4"/><path d="M4 17v3h16v-3"/></svg>Buy</button>
   <button type="button" data-t="selling" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21V9m0 0l-4 4m4-4l4 4"/><path d="M4 7V4h16v3"/></svg>Sell</button>
   <button type="button" data-t="invoices" aria-selected="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6"/></svg>Bills</button>
